@@ -17,7 +17,7 @@ def simulate_price_path(N, S0, mu, sigma, T=1.0):
     times = np.linspace(0, T, N + 1)
     S_path = gbm.simulate(T, N)
     ST = S_path[-1]
-    return times, S_path, ST
+    return times, S_path, float(ST)
 
 
 def main():
@@ -51,7 +51,6 @@ def main():
     times, S_path, ST = simulate_price_path(N, S0, mu, sigma)
     if st.button("Regenerate"):
         times, S_path, ST = simulate_price_path(N, S0, mu, sigma)
-    st.header("Black-Scholes Parameters")
 
     # Display Plot
     plt.style.use("seaborn-v0_8-whitegrid")
@@ -103,14 +102,21 @@ def main():
     bsm = BlackScholesMerton(S0, K, T, r, sigma)
     if selection == "Put":
         price = bsm.price("put")
+        cash_flow = max(K - ST, 0)
+        profit = cash_flow - price
     elif selection == "Call":
         price = bsm.price("call")
+        cash_flow = max(ST - K, 0)
+        profit = cash_flow - price
     else:
         st.write("Please select either 'Put' or 'Call' above. Falling back to 'Call'.")
         price = bsm.price("call")
-    st.write(f"The appropriate price is {price:.2f}")
-    cash_flow = max(ST - K, 0)
-    profit = cash_flow - price
+        cash_flow = max(ST - K, 0)
+        profit = cash_flow - price
+    st.write(f"The appropriate price for this option is **{price:.2f}**")
+    # if st.button("Generate New Price Path"):
+    #     times, S_path, ST = simulate_price_path(N, S0, mu, sigma)
+    st.write(f"Profit from this simulation: **{profit:.2f}**")
 
     # Display Plot
     plt.style.use("seaborn-v0_8-whitegrid")
@@ -130,10 +136,7 @@ def main():
     ax.set_ylabel("Stock Price")
     ax.legend(fontsize=12)
     st.pyplot(fig)
-    #
-    # # Display Profits
-    # st.subheader("Profit Analysis")
-    # st.write(f"Profit from this simulation: **{profit:.2f}**")
+    # Display Profits
 
     # Monte Carlo Average Profit
     # if st.button("Run Monte Carlo (1000 simulations)"):
