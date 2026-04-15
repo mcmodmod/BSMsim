@@ -27,13 +27,14 @@ class GeometricBrownianMotion:
             seed: optional seed for reproducibility
         Returns tuple(times, path)
         """
-        if seed is not None:
-            np.random.seed(seed)
-
         dt = T / N
-        t = np.linspace(0, T, N + 1)
-        W = np.random.normal(0, np.sqrt(dt), size=N).cumsum()
+        if seed is not None:
+            rng = np.random.default_rng(seed)
+            W = rng.normal(0, np.sqrt(dt), size=N).cumsum()
+        else:
+            W = np.random.normal(0, np.sqrt(dt), size=N).cumsum()
         W = np.insert(W, 0, 0.0)  # W(0) = 0
+        t = np.linspace(0, T, N + 1)
         S = self.S0 * np.exp((self.mu - 0.5 * self.sigma**2) * t + self.sigma * W)
         return t, S
 
@@ -46,13 +47,14 @@ class GeometricBrownianMotion:
             seed: optional seed for reproducibility
         """
         if seed is not None:
-            np.random.seed(seed)
-
-        Z = np.random.normal(size=n_results)
-        S0 = self.S0 * np.exp(
+            rng = np.random.default_rng(seed)
+            Z = rng.normal(size=n_results)
+        else:
+            Z = np.random.normal(size=n_results)
+        ST = self.S0 * np.exp(
             (self.mu - 0.5 * self.sigma**2) * T + self.sigma * np.sqrt(T) * Z
         )
-        return S0
+        return ST
 
 
 if __name__ == "__main__":
