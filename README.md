@@ -17,7 +17,7 @@ pip install -r requirements.txt
 ```
 3. Run the app:
 ```
-streamlit run main.py
+streamlit run streamlit_application.py
 ```
 
 **Please note:** The app contains a Monte-Carlo simulation. Large simulation sizes may require significant memory and computation time.
