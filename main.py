@@ -2,15 +2,9 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
 import time
-from simulations import GeometricBrownianMotion
-from blackscholes import BlackScholesMerton
+from simulations import GeometricBrownianMotion, BlackScholesMerton
 
 plt.style.use("seaborn-v0_8-whitegrid")
-# plt.rcParams.update(
-#     {
-#         "text.usetex": True,
-#     }
-# )
 plt.rcParams.update(
     {
         "axes.labelsize": 22,
@@ -54,9 +48,9 @@ def main():
     gbm = GeometricBrownianMotion(S0, mu, sigma)
 
     # Generate Price Path
-    times, S_path = gbm.simulate_gbm(T, N)
+    times, S_path = gbm.simulate(T, N)
     if st.button("Regenerate"):
-        times, S_path = gbm.simulate_gbm(T, N)
+        times, S_path = gbm.simulate(T, N)
     # Display Plot
     fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -109,7 +103,7 @@ def main():
     )
     K = st.number_input(r"Strike Price $K$", value=120.0, min_value=0.01, step=1.0)
     r = st.number_input(r"Risk-free Rate $r$", value=0.02, step=0.01, format="%.3f")
-    times, S_path = gbm.simulate_gbm(T, N)
+    times, S_path = gbm.simulate(T, N)
     ST = float(S_path[-1])
     bsm = BlackScholesMerton(S0, K, T, r, sigma)
     if is_call:
@@ -132,7 +126,7 @@ def main():
         "Note that it is automatically floored to $-V$: at most you can lose what you paid for the option."
     )
     if st.button("Generate New Price Path"):
-        times, S_path = gbm.simulate_gbm(T, N)
+        times, S_path = gbm.simulate(T, N)
         ST = float(S_path[-1])
         if is_call:
             cash_flow = max(ST - K, 0)
@@ -155,7 +149,7 @@ def main():
     ax.set_xlabel("Time (Years)")
     ax.set_ylabel("Asset Price")
     ax.legend(
-        ncol=4,
+        ncol=2,
         bbox_to_anchor=(0.5, 1),
     )
     st.pyplot(fig)
@@ -185,7 +179,7 @@ def main():
         with st.spinner("Running simulation..."):
             start_time = time.perf_counter()
             gbm = GeometricBrownianMotion(S0, mu, sigma)
-            STs = gbm.simulate_gbm_final(T, no_of_simulations)
+            STs = gbm.simulate_terminal(T, no_of_simulations)
             if is_call:
                 cash_flows = np.maximum(STs - K, 0)
             else:
