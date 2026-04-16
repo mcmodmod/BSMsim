@@ -21,3 +21,9 @@ streamlit run streamlit_application.py
 ```
 
 **Please note:** The app contains a Monte-Carlo simulation. Large simulation sizes may require significant memory and computation time.
+
+## Future Improvements
+ - Add Greeks
+ - Performance optimisation for large-scale simulations
+ - Support for American options
+ 
