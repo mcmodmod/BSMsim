@@ -1,6 +1,6 @@
 import numpy as np
+import scipy.stats as ss
 from dataclasses import dataclass
-import matplotlib.pyplot as plt
 
 
 @dataclass
@@ -16,7 +16,7 @@ class GeometricBrownianMotion:
     mu: float
     sigma: float
 
-    def simulate_gbm(
+    def simulate(
         self, T: float, N: int, seed: int | None = None
     ) -> tuple[np.ndarray, np.ndarray]:
         """
@@ -30,15 +30,15 @@ class GeometricBrownianMotion:
         dt = T / N
         if seed is not None:
             rng = np.random.default_rng(seed)
-            W = rng.normal(0, np.sqrt(dt), size=N).cumsum()
+            dW = rng.normal(0, np.sqrt(dt), size=N)
         else:
-            W = np.random.normal(0, np.sqrt(dt), size=N).cumsum()
-        W = np.insert(W, 0, 0.0)  # W(0) = 0
+            dW = np.random.normal(0, np.sqrt(dt), size=N)
+        W = np.concatenate(([0.0], np.cumsum(dW)))
         t = np.linspace(0, T, N + 1)
         S = self.S0 * np.exp((self.mu - 0.5 * self.sigma**2) * t + self.sigma * W)
         return t, S
 
-    def simulate_gbm_final(self, T: float, n_results: int = 1, seed: int | None = None):
+    def simulate_terminal(self, T: float, n_results: int = 1, seed: int | None = None):
         """
         Returns value of geom. Brownian motion after time T, without computing the full path.
         Parameters:
@@ -57,26 +57,72 @@ class GeometricBrownianMotion:
         return ST
 
 
+@dataclass
+class BlackScholesMerton:
+    """
+    Attributes:
+        S0: Spot price of the underlying asset
+        K: Strike price of the option
+        T: Time to maturity (in years)
+        r: Risk-free interest rate
+        sigma: Volatility of the underlying asset
+    """
+
+    S0: float
+    K: float
+    T: float
+    r: float
+    sigma: float
+
+    def price(self, option_type: str = "call") -> float:
+        """
+        Parameters:
+            option_type: "call" for Call option, "put" for Put option
+        """
+        option_type = option_type.lower()
+        if option_type == "call":
+            omega = 1
+        elif option_type == "put":
+            omega = -1
+        else:
+            raise ValueError("option_type must be 'call' or 'put'")
+
+        d1 = (
+            1
+            / (self.sigma * np.sqrt(self.T))
+            * (np.log(self.S0 / self.K) + (self.r + self.sigma**2 / 2) * self.T)
+        )
+        d2 = d1 - self.sigma * np.sqrt(self.T)
+        return float(
+            omega
+            * (
+                self.S0 * ss.norm.cdf(omega * d1)
+                - self.K * np.exp(-self.r * self.T) * ss.norm.cdf(omega * d2)
+            )
+        )
+
+
 if __name__ == "__main__":
+    # GBM Testing
     S0 = 120
     mu = 0.0
-    gbm = GeometricBrownianMotion(S0, mu, 0.1)
-    times, S_path = gbm.simulate_gbm(1, 250)
-    plt.style.use("seaborn-v0_8-whitegrid")
-    fig, ax = plt.subplots(figsize=(8, 5))
+    sigma = 0.1
+    T = 1
+    N = 10
+    gbm = GeometricBrownianMotion(S0, mu, sigma)
+    times, S_path = gbm.simulate(T, N)
+    ST = gbm.simulate_terminal(T)
 
-    ax.plot(times, S_path, color="k", label=r"Price Path $S(t)$")
-    ax.plot(
-        times,
-        S0 * np.exp(mu * times),
-        linestyle="--",
-        color="orange",
-        label=r"Drift Path $S_0 e^{\mu t}$",
-    )
-    ax.hlines(S0, 0, 1, linestyle="-.", color="grey", label=r"Initial Value $S_0$")
-    # d = max(S0 - np.min(S_path), np.max(S_path) - S0) * (1 + 0.05)
-    # ax.set_ylim(S0 - d, S0 + d)
-    ax.set_xlabel("Time (Years)")
-    ax.set_ylabel("Asset Price")
-    ax.legend(fontsize=12)
-    plt.show()
+    # BSM Testing
+    omega = 1  # European Call Option
+    r = 0.02
+    sigma = 0.1
+    T = 1
+    K = 120
+    S0 = 120
+    bsm = BlackScholesMerton(S0, K, T, r, sigma)
+    V_call = bsm.price("call")
+    V_put = bsm.price("put")
+    print(bsm)
+    print(f"{V_call=}")
+    print(f"{V_put=}")
