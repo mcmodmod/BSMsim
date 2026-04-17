@@ -160,10 +160,10 @@ def main():
     st.subheader("Small Monte-Carlo Simulation")
     no_of_simulations = st.number_input(
         r"Number of Simulations n",
-        value=1_000_000,
+        value=100_000,
         min_value=100,
-        max_value=100_000_000,
-        step=100000,
+        max_value=5_000_000,
+        step=50_000,
     )
     st.write(
         f"Press the button below to simulate buying this option {no_of_simulations} times at the BSM-optimal price to approximate the average profit."
@@ -200,7 +200,7 @@ def main():
                 """)
         with st.spinner("Plotting..."):
             # Only plot every {step}-th point for performance
-            plot_every = 1000
+            plot_every = 2500
             simulations = np.arange(1, no_of_simulations + 1, plot_every)
             cummean = np.cumsum(discounted_profits)[::plot_every] / simulations
             ax.plot(
