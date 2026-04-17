@@ -17,6 +17,9 @@ plt.rcParams.update(
     }
 )
 
+MAX_MC_SIMS = 2_000_000
+PLOTTING_STEPS = 2000
+
 
 def main():
     st.set_page_config(page_title="GBM & BSM Simulator", layout="centered")
@@ -137,7 +140,7 @@ def main():
     st.write(f"Discounted profit from this simulation: **{discounted_profit:.2f}**")
 
     # Display Plot
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(10, 7))
     if discounted_profit > 0:
         ax.vlines(T, K + price, ST, color="limegreen", linewidth=2, label="Profit")
     else:
@@ -157,12 +160,12 @@ def main():
     # -----------------------------------------------------------------------
     # -----------------------------------------------------------------------
 
-    st.subheader("Small Monte-Carlo Simulation")
+    st.subheader("Monte-Carlo Simulation")
     no_of_simulations = st.number_input(
         r"Number of Simulations n",
         value=100_000,
         min_value=100,
-        max_value=5_000_000,
+        max_value=MAX_MC_SIMS,
         step=50_000,
     )
     st.write(
@@ -200,9 +203,8 @@ def main():
                 """)
         with st.spinner("Plotting..."):
             # Only plot every {step}-th point for performance
-            plot_every = 2500
-            simulations = np.arange(1, no_of_simulations + 1, plot_every)
-            cummean = np.cumsum(discounted_profits)[::plot_every] / simulations
+            simulations = np.arange(1, no_of_simulations + 1, PLOTTING_STEPS)
+            cummean = np.cumsum(discounted_profits)[::PLOTTING_STEPS] / simulations
             ax.plot(
                 simulations,
                 np.abs(cummean),
